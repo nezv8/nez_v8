@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Tạo Hilbert</title>
+    <style>
+        :root {
+            --bg-color: #0b0a10;
+            --panel-bg: #131218;
+            --border-color: #2a2833;
+            --text-main: #e0e0e0;
+            --text-muted: #888;
+            --accent-gold: #e2b740;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-family: 'Georgia', serif;
+            font-weight: normal;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 1200px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Canvas Area */
+        .canvas-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0d0c13;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 700px;
+            height: auto;
+            aspect-ratio: 1 / 1;
+        }
+
+        /* Controls Area */
+        .controls-section {
+            width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .panel {
+            background-color: #0b0a10;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-weight: bold;
+        }
+
+        /* Sliders */
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .control-value {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+        }
+
+        /* Bottom Panels Grid */
+        .bottom-panels {
+            display: flex;
+            gap: 20px;
+        }
+
+        .matrix-panel, .legend-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Matrix Toggles */
+        .matrix-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1a1824;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        /* Simple Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-gold); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8em;
+            margin-bottom: 12px;
+        }
+        .legend-line {
+            display: inline-block;
+            width: 20px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .legend-symbol { color: #666; font-style: italic; }
+
+        /* Nút Fly Play MP3 */
+        .floating-music-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent-gold);
+            color: #131218;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(226, 183, 64, 0.4);
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+
+        .floating-music-btn:hover {
+            transform: scale(1.1);
+            background-color: #ffd700;
+        }
+
+        /* Hiệu ứng toả sáng khi nhạc đang phát */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(226, 183, 64, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(226, 183, 64, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(226, 183, 64, 0); }
+        }
+
+        .floating-music-btn.playing {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+            .controls-section {
+                width: 100%;
+            }
+        }
+        @media (max-width: 600px) {
+            .bottom-panels {
+                flex-direction: column;
+            }
+            .floating-music-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- THẺ AUDIO CHỨA NHẠC NỀN -->
+    <!-- Thay đổi URL src="" bên dưới thành link nhạc mp3 của bạn -->
+    <audio id="bg-music" loop>
+        <source src="./Cover  OST Thế Giới Hoàn Mỹ - Niết Bàn.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- NÚT PHÁT NHẠC NỔI -->
+    <button id="music-btn" class="floating-music-btn" title="Phát nhạc nền">🎵</button>
+
+    <header>
+        <h1>Trình Tạo Hilbert</h1>
+        <div class="subtitle">
+            Công cụ nghệ thuật chuỗi đối xứng D<sub>12</sub>: D₁₂-symmetry string-art engine định tuyến các điểm theo i &rarr; (i &times; K) mod N qua các luồng lồng nhau Fibonacci (8 chánh đạo).<br>
+            Cùng một ý tưởng "lưu trữ hạt giống sự sống, thông qua các Mandala" đằng sau mỗi ấn chú.
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Khu vực vẽ Canvas -->
+        <div class="canvas-section">
+            <canvas id="artCanvas" width="1200" height="1200"></canvas>
+        </div>
+
+        <!-- Khu vực bảng điều khiển -->
+        <div class="controls-section">
+            <div class="panel">
+                <div class="panel-title">Thông Số Cơ Bản</div>
+                
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Số Điểm Lớp Chính (N)</span>
+                        <span class="control-value" id="val-N">12</span>
+                    </div>
+                    <input type="range" id="input-N" min="3" max="120" value="12">
+                </div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Hệ Số Nhân (K)</span>
+                        <span class="control-value" id="val-K">5</span>
+                    </div>
+                    <input type="range" id="input-K" min="1" max="120" value="5">
+                </div>
+
+                <div style="font-size: 0.7em; color: #666; margin-bottom: 15px;">Quy tắc định tuyến: i &rarr; (i &times; K) mod N</div>
+
+                <div class="control-group">
+                    <div class="control-header">
+                        <span>Số Luồng Lồng Nhau (Tiers)</span>
+                        <span class="control-value" id="val-T">4</span>
+                    </div>
+                    <input type="range" id="input-T" min="1" max="8" value="4">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-axes" checked>
+                    <label for="check-axes">Vẽ trục và nan hoa hướng tâm</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="check-bound" checked>
+                    <label for="check-bound">Vẽ ranh giới hình học đa giác</label>
+                </div>
+            </div>
+
+            <div class="bottom-panels">
+                <div class="panel matrix-panel">
+                    <div class="panel-title">Ma Trận Luồng</div>
+                    <div id="matrix-content">
+                        <!-- Nội dung sẽ được tạo tự động bằng JS để hỗ trợ tối đa 8 tiers -->
+                    </div>
+                </div>
+
+                <div class="panel legend-panel">
+                    <div class="panel-title">Chú Giải Fibonacci</div>
+                    <div id="legend-content">
+                        <!-- Nội dung sẽ được tạo tự động bằng JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('artCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Inputs
+        const inN = document.getElementById('input-N');
+        const inK = document.getElementById('input-K');
+        const inT = document.getElementById('input-T');
+        const chkAxes = document.getElementById('check-axes');
+        const chkBound = document.getElementById('check-bound');
+
+        const valN = document.getElementById('val-N');
+        const valK = document.getElementById('val-K');
+        const valT = document.getElementById('val-T');
+
+        const matrixContent = document.getElementById('matrix-content');
+        const legendContent = document.getElementById('legend-content');
+
+        // Cấu hình 8 Tiers
+        const colors = [
+            '#ffffff', '#00e5ff', '#ffcc00', '#9d00ff',
+            '#ff3366', '#33ff99', '#ff8800', '#0066ff' 
+        ];
+        
+        const tierNames = [
+            'Lõi Đa Chiều', 'Vector Xanh Ngọc &gamma;', 'Vector Vàng &beta;', 'Vector Tím &alpha;',
+            'Vector Đỏ &delta;', 'Vector Bạc Hà &epsilon;', 'Vector Cam &zeta;', 'Vector Lam &eta;'
+        ];
+        
+        const tierSymbols = [
+            '(F<sub>n</sub>)', '(F<sub>n-1</sub>)', '(F<sub>n-2</sub>)', '(F<sub>n-3</sub>)',
+            '(F<sub>n-4</sub>)', '(F<sub>n-5</sub>)', '(F<sub>n-6</sub>)', '(F<sub>n-7</sub>)'
+        ];
+
+        const fibRatios = [1.0, 5/8, 3/8, 2/8, 1/8, 1/13, 1/21, 1/34]; 
+
+        let toggles = [];
+
+        function initTiersUI() {
+            for (let i = 0; i < 8; i++) {
+                const divMatrix = document.createElement('div');
+                divMatrix.className = 'matrix-item';
+                divMatrix.id = `matrix-item-${i}`;
+                divMatrix.innerHTML = `
+                    <span>${tierNames[i]}</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-${i}" checked>
+                        <span class="slider" style="${i === 0 ? '' : 'background-color: #333;'}"></span>
+                    </label>
+                `;
+                matrixContent.appendChild(divMatrix);
+                
+                const style = document.createElement('style');
+                style.innerHTML = `input#toggle-${i}:checked + .slider { background-color: ${colors[i]}; }`;
+                document.head.appendChild(style);
+
+                const divLegend = document.createElement('div');
+                divLegend.className = 'legend-item';
+                divLegend.id = `legend-item-${i}`;
+                
+                const lineStyle = i === 0 
+                    ? `background: ${colors[i]}; border: none; height: 3px;` 
+                    : `border-top: 3px dashed ${colors[i]}; background: transparent; height: 0;`;
+                
+                divLegend.innerHTML = `
+                    <div>
+                        <span class="legend-line" style="${lineStyle}"></span> 
+                        <span style="color: ${colors[i]}; font-weight: 600;">${tierNames[i]}</span>
+                    </div>
+                    <span class="legend-symbol">${tierSymbols[i]}</span>
+                `;
+                legendContent.appendChild(divLegend);
+
+                toggles.push(document.getElementById(`toggle-${i}`));
+                toggles[i].addEventListener('change', draw);
+            }
+        }
+
+        function updateTiersVisibility() {
+            const T = parseInt(inT.value);
+            for (let i = 0; i < 8; i++) {
+                const matrixEl = document.getElementById(`matrix-item-${i}`);
+                const legendEl = document.getElementById(`legend-item-${i}`);
+                if (i < T) {
+                    matrixEl.style.display = 'flex';
+                    legendEl.style.display = 'flex';
+                } else {
+                    matrixEl.style.display = 'none';
+                    legendEl.style.display = 'none';
+                }
+            }
+        }
+
+        function draw() {
+            const N = parseInt(inN.value);
+            const K = parseInt(inK.value);
+            const T = parseInt(inT.value);
+            
+            valN.textContent = N;
+            valK.textContent = K;
+            valT.textContent = T;
+
+            updateTiersVisibility();
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const maxRadius = Math.min(cx, cy) * 0.75;
+
+            const gradient = ctx.createRadialGradient(cx, cy, maxRadius * 0.8, cx, cy, maxRadius * 1.1);
+            gradient.addColorStop(0, 'rgba(255, 204, 0, 0.0)');
+            gradient.addColorStop(1, 'rgba(255, 204, 0, 0.15)');
+            ctx.beginPath();
+            ctx.arc(cx, cy, maxRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            if (chkAxes.checked) {
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([]);
+                
+                ctx.beginPath();
+                ctx.moveTo(cx - maxRadius - 40, cy); ctx.lineTo(cx + maxRadius + 40, cy);
+                ctx.moveTo(cx, cy - maxRadius - 40); ctx.lineTo(cx, cy + maxRadius + 40);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#888';
+                ctx.font = '24px Georgia';
+                ctx.fillText('X', cx + maxRadius + 50, cy + 8);
+                ctx.fillText('Y', cx - 10, cy - maxRadius - 50);
+            }
+
+            const baseNodeSize = N > 50 ? (N > 90 ? 2 : 4) : 6;
+
+            for (let t = 0; t < T; t++) {
+                if (!toggles[t].checked) continue;
+
+                const r = maxRadius * fibRatios[t];
+                const color = colors[t];
+                
+                let points = [];
+                for (let i = 0; i < N; i++) {
+                    const angle = -Math.PI/2 + (Math.PI * 2 * i / N);
+                    points.push({
+                        x: cx + r * Math.cos(angle),
+                        y: cy + r * Math.sin(angle)
+                    });
+                }
+
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+                
+                if (t === 0) {
+                    ctx.setLineDash([]);
+                    ctx.lineWidth = 3;
+                } else {
+                    ctx.setLineDash([8, 8]);
+                    ctx.lineWidth = 2;
+                }
+
+                if (chkBound.checked) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[0].x, points[0].y);
+                    for (let i = 1; i < N; i++) {
+                        ctx.lineTo(points[i].x, points[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                for (let i = 0; i < N; i++) {
+                    const targetIdx = (i * K) % N;
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[targetIdx].x, points[targetIdx].y);
+                }
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+                for (let i = 0; i < N; i++) {
+                    ctx.beginPath();
+                    ctx.arc(points[i].x, points[i].y, t === 0 ? baseNodeSize * 1.2 : baseNodeSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // ==========================================
+        // XỬ LÝ SỰ KIỆN MUSIC BUTTON VÀ CLICK TO PLAY
+        // ==========================================
+        const bgMusic = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        let isPlaying = false;
+
+        // Hàm cập nhật giao diện khi nhạc đang phát
+        function setMusicPlayingState() {
+            musicBtn.classList.add('playing');
+            musicBtn.innerHTML = '⏸️'; 
+            musicBtn.title = "Tạm dừng nhạc";
+            isPlaying = true;
+        }
+
+        // Hàm cập nhật giao diện khi nhạc dừng
+        function setMusicPausedState() {
+            musicBtn.classList.remove('playing');
+            musicBtn.innerHTML = '🎵'; 
+            musicBtn.title = "Phát nhạc nền";
+            isPlaying = false;
+        }
+
+        // Xử lý khi nhấn nút nổi trực tiếp
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Ngăn chặn sự kiện click lan ra document
+            if (isPlaying) {
+                bgMusic.pause();
+                setMusicPausedState();
+            } else {
+                bgMusic.play().then(() => {
+                    setMusicPlayingState();
+                }).catch(error => {
+                    console.log("Không thể phát nhạc:", error);
+                });
+            }
+        });
+
+        // Xử lý khi click/chạm vào bất kỳ đâu trên trang
+        const playMusicOnFirstInteraction = () => {
+            // Nếu nhạc chưa phát thì gọi play()
+            if (!isPlaying) {
+                bgMusic.play().then(() => {
+                    setMusicPlayingState();
+                }).catch(error => {
+                    console.log("Không thể phát nhạc do trình duyệt chặn:", error);
+                });
+            }
+            // Hủy sự kiện này sau lần tương tác đầu tiên để tối ưu hiệu suất
+            document.removeEventListener('click', playMusicOnFirstInteraction);
+            document.removeEventListener('touchstart', playMusicOnFirstInteraction);
+        };
+
+        // Lắng nghe sự kiện click và chạm trên toàn trang
+        document.addEventListener('click', playMusicOnFirstInteraction);
+        document.addEventListener('touchstart', playMusicOnFirstInteraction);
+
+        // Khởi tạo
+        initTiersUI();
+        
+        [inN, inK, inT, chkAxes, chkBound].forEach(input => {
+            input.addEventListener('input', draw);
+            input.addEventListener('change', draw);
+        });
+
+        // Vẽ ngay lần đầu
+        draw();
+    </script>
+</body>
+</html>
